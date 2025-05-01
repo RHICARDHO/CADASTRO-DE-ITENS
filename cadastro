@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Telas</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1603791440384-56cd371ee9a7'); /* Imagem exemplo */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
+    }
+
+    header {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .form-container, .list-container {
+      background-color: rgba(0, 0, 0, 0.7);
+      max-width: 400px;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 10px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    #pesquisar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    #pesquisar input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 5px 0 0 5px;
+      border: none;
+    }
+
+    #pesquisar button {
+      background-color: #2196F3;
+      padding: 9px;
+      border-radius: 0 5px 5px 0;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>Lista de Telas</header>
+
+  <div class="form-container">
+    <form id="formulario">
+      <label for="nome">Nome:</label>
+      <input type="text" id="nome" required>
+
+      <label for="modelo">Modelo:</label>
+      <input type="text" id="modelo" required>
+
+      <label for="tipo">Tipo:</label>
+      <input type="text" id="tipo" required>
+
+      <label for="preco">Preço:</label>
+      <input type="text" id="preco" required>
+
+      <button type="submit">Adicionar</button>
+    </form>
+  </div>
+
+  <div class="list-container">
+    <div id="pesquisar">
+      <input type="text" id="busca" placeholder="Pesquisar por nome ou modelo...">
+      <button onclick="filtrar()">
+        🔍
+      </button>
+    </div>
+    <ul id="listaTelas"></ul>
+  </div>
+
+  <script>
+    const formulario = document.getElementById('formulario');
+    const listaTelas = document.getElementById('listaTelas');
+    const busca = document.getElementById('busca');
+    let dados = [];
+
+    formulario.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const modelo = document.getElementById('modelo').value;
+      const tipo = document.getElementById('tipo').value;
+      const preco = document.getElementById('preco').value;
+
+      const item = { nome, modelo, tipo, preco };
+      dados.push(item);
+      atualizarLista(dados);
+      formulario.reset();
+    });
+
+    function atualizarLista(lista) {
+      listaTelas.innerHTML = '';
+      lista.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${item.nome} | ${item.modelo} | ${item.tipo} | R$${item.preco}`;
+        listaTelas.appendChild(li);
+      });
+    }
+
+    function filtrar() {
+      const termo = busca.value.toLowerCase();
+      const filtrado = dados.filter(item =>
+        item.nome.toLowerCase().includes(termo) ||
+        item.modelo.toLowerCase().includes(termo)
+      );
+      atualizarLista(filtrado);
+    }
+  </script>
+</body>
+</html>
