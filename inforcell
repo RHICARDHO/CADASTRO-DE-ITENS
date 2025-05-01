@@ -1,0 +1,66 @@
+import { useState, useEffect } from "react";
+import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+
+// Firebase configuration (substitua pelos dados do seu projeto)
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_DOMINIO.firebaseapp.com",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
+
+// Inicializa o Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export default function CadastroItens() {
+  const [itens, setItens] = useState([]);
+  const [nome, setNome] = useState("");
+  const [modelo, setModelo] = useState("");
+  const [valor, setValor] = useState("");
+
+  useEffect(() => {
+    const fetchItens = async () => {
+      const querySnapshot = await getDocs(collection(db, "itens"));
+      setItens(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchItens();
+  }, []);
+
+  const adicionarItem = async () => {
+    if (nome && modelo && valor) {
+      const docRef = await addDoc(collection(db, "itens"), { nome, modelo, valor });
+      setItens([...itens, { id: docRef.id, nome, modelo, valor }]);
+      setNome("");
+      setModelo("");
+      setValor("");
+    }
+  };
+
+  const removerItem = async (id) => {
+    await deleteDoc(doc(db, "itens", id));
+    setItens(itens.filter(item => item.id !== id));
+  };
+
+  return (
+    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px", textAlign: "center" }}>
+      <h1>Cadastro de Itens</h1>
+      <input placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} /><br /><br />
+      <input placeholder="Modelo" value={modelo} onChange={(e) => setModelo(e.target.value)} /><br /><br />
+      <input placeholder="Valor" type="number" value={valor} onChange={(e) => setValor(e.target.value)} /><br /><br />
+      <button onClick={adicionarItem}>Adicionar</button>
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {itens.map((item) => (
+          <li key={item.id} style={{ margin: "10px 0", padding: "10px", border: "1px solid #ccc" }}>
+            <strong>{item.nome}</strong> - {item.modelo} - R${item.valor}
+            <button onClick={() => removerItem(item.id)} style={{ marginLeft: "10px" }}>Remover</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
