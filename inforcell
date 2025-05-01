@@ -1,66 +1,161 @@
-import { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-
-// Firebase configuration (substitua pelos dados do seu projeto)
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_DOMINIO.firebaseapp.com",
-  projectId: "SEU_PROJECT_ID",
-  storageBucket: "SEU_BUCKET.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID"
-};
-
-// Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export default function CadastroItens() {
-  const [itens, setItens] = useState([]);
-  const [nome, setNome] = useState("");
-  const [modelo, setModelo] = useState("");
-  const [valor, setValor] = useState("");
-
-  useEffect(() => {
-    const fetchItens = async () => {
-      const querySnapshot = await getDocs(collection(db, "itens"));
-      setItens(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    };
-    fetchItens();
-  }, []);
-
-  const adicionarItem = async () => {
-    if (nome && modelo && valor) {
-      const docRef = await addDoc(collection(db, "itens"), { nome, modelo, valor });
-      setItens([...itens, { id: docRef.id, nome, modelo, valor }]);
-      setNome("");
-      setModelo("");
-      setValor("");
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Telas</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1603791440384-56cd371ee9a7'); /* Imagem exemplo */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
     }
-  };
 
-  const removerItem = async (id) => {
-    await deleteDoc(doc(db, "itens", id));
-    setItens(itens.filter(item => item.id !== id));
-  };
+    header {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      text-align: center;
+      font-size: 2em;
+    }
 
-  return (
-    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px", textAlign: "center" }}>
-      <h1>Cadastro de Itens</h1>
-      <input placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} /><br /><br />
-      <input placeholder="Modelo" value={modelo} onChange={(e) => setModelo(e.target.value)} /><br /><br />
-      <input placeholder="Valor" type="number" value={valor} onChange={(e) => setValor(e.target.value)} /><br /><br />
-      <button onClick={adicionarItem}>Adicionar</button>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {itens.map((item) => (
-          <li key={item.id} style={{ margin: "10px 0", padding: "10px", border: "1px solid #ccc" }}>
-            <strong>{item.nome}</strong> - {item.modelo} - R${item.valor}
-            <button onClick={() => removerItem(item.id)} style={{ marginLeft: "10px" }}>Remover</button>
-          </li>
-        ))}
-      </ul>
+    .form-container, .list-container {
+      background-color: rgba(0, 0, 0, 0.7);
+      max-width: 400px;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 10px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    #pesquisar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    #pesquisar input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 5px 0 0 5px;
+      border: none;
+    }
+
+    #pesquisar button {
+      background-color: #2196F3;
+      padding: 9px;
+      border-radius: 0 5px 5px 0;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>Lista de Telas</header>
+
+  <div class="form-container">
+    <form id="formulario">
+      <label for="nome">Nome:</label>
+      <input type="text" id="nome" required>
+
+      <label for="modelo">Modelo:</label>
+      <input type="text" id="modelo" required>
+
+      <label for="tipo">Tipo:</label>
+      <input type="text" id="tipo" required>
+
+      <label for="preco">Preço:</label>
+      <input type="text" id="preco" required>
+
+      <button type="submit">Adicionar</button>
+    </form>
+  </div>
+
+  <div class="list-container">
+    <div id="pesquisar">
+      <input type="text" id="busca" placeholder="Pesquisar por nome ou modelo...">
+      <button onclick="filtrar()">
+        🔍
+      </button>
     </div>
-  );
-}
+    <ul id="listaTelas"></ul>
+  </div>
+
+  <script>
+    const formulario = document.getElementById('formulario');
+    const listaTelas = document.getElementById('listaTelas');
+    const busca = document.getElementById('busca');
+    let dados = [];
+
+    formulario.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const modelo = document.getElementById('modelo').value;
+      const tipo = document.getElementById('tipo').value;
+      const preco = document.getElementById('preco').value;
+
+      const item = { nome, modelo, tipo, preco };
+      dados.push(item);
+      atualizarLista(dados);
+      formulario.reset();
+    });
+
+    function atualizarLista(lista) {
+      listaTelas.innerHTML = '';
+      lista.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${item.nome} | ${item.modelo} | ${item.tipo} | R$${item.preco}`;
+        listaTelas.appendChild(li);
+      });
+    }
+
+    function filtrar() {
+      const termo = busca.value.toLowerCase();
+      const filtrado = dados.filter(item =>
+        item.nome.toLowerCase().includes(termo) ||
+        item.modelo.toLowerCase().includes(termo)
+      );
+      atualizarLista(filtrado);
+    }
+  </script>
+</body>
+</html>
